@@ -65,7 +65,7 @@ assign select_one_invalid_entry = !valid[ 0] ? 3'd0  :
                                   !valid[ 4] ? 3'd4  :
                                   !valid[ 5] ? 3'd5  :
                                   !valid[ 6] ? 3'd6  :
-                                  !valid[ 7] ? 3'd7  : 5'h0; 
+                                  !valid[ 7] ? 3'd7  : 3'h0; 
 
 always @(posedge clk) begin
     if (reset) begin
