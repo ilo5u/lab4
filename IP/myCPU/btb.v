@@ -42,19 +42,19 @@ reg [29:0] ras_buffer;
 wire ras_full;
 wire ras_empty;
 
-reg [31:0] match_rd;
+reg [BTBNUM-1:0] match_rd;
 
 wire [29:0] match_target;
 wire [ 2:0] match_counter;
-wire [ 4:0] match_index;
+wire [$clog2(BTBNUM)-1:0] match_index;
 wire        match_jirl_flag;
 
 wire all_entry_valid;
-wire [4:0] select_one_invalid_entry;
+wire [$clog2(BTBNUM)-1:0] select_one_invalid_entry;
 
-wire [4:0] add_entry_index;
+wire [$clog2(BTBNUM)-1:0] add_entry_index;
 
-assign add_entry_index = all_entry_valid ? fcsr[4:0] : select_one_invalid_entry;
+assign add_entry_index = all_entry_valid ? fcsr[$clog2(BTBNUM)-1:0] : select_one_invalid_entry;
 
 assign all_entry_valid = &valid;
 
