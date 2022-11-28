@@ -1,3 +1,7 @@
+Frequency: 68MHz
+WNS: 0.228ns
+WHS: 0.052ns
+WPWS: 0ns
 ====================================================
 |  benckmark  |   clocks   |   insts   |    ipc    |
 | 1-A0        |    1503771 |    813396 |  0.540904 |
