@@ -1,6 +1,6 @@
 module btb
 #(
-    parameter BTBNUM = 8
+    parameter BTBNUM = 4 // chengxin: btb
 )
 (
     input             clk           ,
@@ -42,30 +42,27 @@ reg [29:0] ras_buffer;
 wire ras_full;
 wire ras_empty;
 
-reg [BTBNUM-1:0] match_rd;
+reg [BTBNUM-1:0] match_rd; // chengxin: btb
 
 wire [29:0] match_target;
 wire [ 2:0] match_counter;
-wire [$clog2(BTBNUM)-1:0] match_index;
+wire [$clog2(BTBNUM)-1:0] match_index; // chengxin: btb
 wire        match_jirl_flag;
 
 wire all_entry_valid;
-wire [$clog2(BTBNUM)-1:0] select_one_invalid_entry;
+wire [$clog2(BTBNUM)-1:0] select_one_invalid_entry; // chengxin: btb
 
-wire [$clog2(BTBNUM)-1:0] add_entry_index;
+wire [$clog2(BTBNUM)-1:0] add_entry_index; // chengxin: btb
 
-assign add_entry_index = all_entry_valid ? fcsr[$clog2(BTBNUM)-1:0] : select_one_invalid_entry;
+assign add_entry_index = all_entry_valid ? fcsr[$clog2(BTBNUM)-1:0] : select_one_invalid_entry; // chengxin: btb
 
 assign all_entry_valid = &valid;
 
-assign select_one_invalid_entry = !valid[ 0] ? 3'd0  :
-                                  !valid[ 1] ? 3'd1  :
-                                  !valid[ 2] ? 3'd2  :
-                                  !valid[ 3] ? 3'd3  :
-                                  !valid[ 4] ? 3'd4  :
-                                  !valid[ 5] ? 3'd5  :
-                                  !valid[ 6] ? 3'd6  :
-                                  !valid[ 7] ? 3'd7  : 5'h0; 
+// chengxin: btb
+assign select_one_invalid_entry = !valid[ 0] ? 2'd0  :
+                                  !valid[ 1] ? 2'd1  :
+                                  !valid[ 2] ? 2'd2  :
+                                  !valid[ 3] ? 2'd3  : 2'h0; 
 
 always @(posedge clk) begin
     if (reset) begin
@@ -125,14 +122,11 @@ always @(posedge clk) begin
     end
 end
 
-assign {match_target, match_counter, match_index, match_jirl_flag} = {39{match_rd[0 ]}} & {target[0 ], counter[0 ], 3'd0 , jirl_flag[0 ]} |
-                                                                     {39{match_rd[1 ]}} & {target[1 ], counter[1 ], 3'd1 , jirl_flag[1 ]} |
-                                                                     {39{match_rd[2 ]}} & {target[2 ], counter[2 ], 3'd2 , jirl_flag[2 ]} |
-                                                                     {39{match_rd[3 ]}} & {target[3 ], counter[3 ], 3'd3 , jirl_flag[3 ]} |
-                                                                     {39{match_rd[4 ]}} & {target[4 ], counter[4 ], 3'd4 , jirl_flag[4 ]} |
-                                                                     {39{match_rd[5 ]}} & {target[5 ], counter[5 ], 3'd5 , jirl_flag[5 ]} |
-                                                                     {39{match_rd[6 ]}} & {target[6 ], counter[6 ], 3'd6 , jirl_flag[6 ]} |
-                                                                     {39{match_rd[7 ]}} & {target[7 ], counter[7 ], 3'd7 , jirl_flag[7 ]};
+// chengxin: btb
+assign {match_target, match_counter, match_index, match_jirl_flag} = {39{match_rd[0 ]}} & {target[0 ], counter[0 ], 2'd0 , jirl_flag[0 ]} |
+                                                                     {39{match_rd[1 ]}} & {target[1 ], counter[1 ], 2'd1 , jirl_flag[1 ]} |
+                                                                     {39{match_rd[2 ]}} & {target[2 ], counter[2 ], 2'd2 , jirl_flag[2 ]} |
+                                                                     {39{match_rd[3 ]}} & {target[3 ], counter[3 ], 2'd3 , jirl_flag[3 ]};
 
 assign ret_pc = match_jirl_flag ? {ras_buffer, 2'b0} : {match_target, 2'b0};
 assign ret_en = |match_rd;

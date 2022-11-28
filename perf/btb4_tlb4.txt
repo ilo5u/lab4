@@ -1,0 +1,4 @@
+Frequency: 68MHz
+WNS: 0.228ns
+WHS: 0.052ns
+WPWS: 0ns
