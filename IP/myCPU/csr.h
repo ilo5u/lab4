@@ -15,7 +15,7 @@
 `define ECODE     21:16
 `define ESUBCODE  30:22
 //TLBIDX
-`define INDEX     1:0 // chengxin: tlb
+`define INDEX     0:0 // chengxin: tlb
 `define PS        29:24
 `define NE        31
 //TLBEHI

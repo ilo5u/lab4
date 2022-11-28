@@ -93,7 +93,7 @@ wire [31:0]  div_result;
 wire [31:0]  mod_result;
 wire [63:0]  mul_result;
 wire [ 9:0]  csr_asid;
-wire [ 1:0]  rand_index; // chengxin: tlb
+wire   rand_index; // chengxin: tlb
 wire [31:0]  tlbw_tlbehi;
 wire [31:0]  tlbw_tlbelo0;
 wire [31:0]  tlbw_tlbelo1;
