@@ -3,6 +3,8 @@
 module id_stage(
     input                               clk           ,
     input                               reset         ,
+    //brbus
+    input  [`BR_BUS_WD       -1:0] br_bus             ,
     //allowin
     input                               es_allowin    ,
     output                              ds_allowin    ,
@@ -15,8 +17,7 @@ module id_stage(
     //to es
     output                              ds_to_es_valid,
     output [`DS_TO_ES_BUS_WD -1:0]      ds_to_es_bus  ,
-    //to fs
-    output [`BR_BUS_WD       -1:0]      br_bus        ,
+    output [`BTB_BUS_WD      -1:0]      btb_bus       ,
     //exception
     input                               excp_flush    ,
     input                               ertn_flush    ,
@@ -45,19 +46,6 @@ module id_stage(
     input                               ws_to_ds_valid,
     //from axi
     input                               write_buffer_empty,
-    //to btb
-    output                              btb_operate_en    ,
-    output                              btb_pop_ras       ,
-    output                              btb_push_ras      ,
-    output                              btb_add_entry     ,
-    output                              btb_delete_entry  ,
-    output                              btb_pre_error     ,
-    output                              btb_pre_right     ,
-    output                              btb_target_error  ,
-    output                              btb_right_orien   ,
-    output [31:0]                       btb_right_target  ,    
-    output [31:0]                       btb_operate_pc    ,
-    output [ 4:0]                       btb_operate_index ,
     //to rf: for write back
     input  [`WS_TO_RF_BUS_WD -1:0]      ws_to_rf_bus      
     `ifdef DIFFTEST_EN
@@ -92,6 +80,23 @@ assign {ds_btb_target,  //108:77
         ds_inst,        //63:32
         ds_pc           //31:0
        } = fs_to_ds_bus_r;
+
+assign btb_bus = {     inst_beq,
+                       inst_bne,
+                       inst_blt,
+                       inst_bge,
+                       inst_blt,
+                       inst_bge,
+                       inst_bl ,
+                       inst_b  ,
+                       inst_jirl,
+                       inst_bltu,
+                       inst_bgeu,
+                       ds_btb_target,  //38:7
+                       ds_btb_index,   //6:2
+                       ds_btb_taken,   //1
+                       ds_btb_en       //0
+                       };
 
 wire        rf_we   ;
 wire [ 4:0] rf_waddr;
@@ -282,8 +287,6 @@ wire        kernel_inst;
 wire [31:0] rdcnt_result;
 wire        rdcnt_en;
 
-reg         branch_slot_cancel;
-
 wire        tlb_inst_stall;
 
 wire        br_inst;
@@ -299,11 +302,8 @@ wire        inst_need_rkd;
 wire [31:0] rj_value_forward_es;
 wire [31:0] rkd_value_forward_es;
 
-assign br_bus       = {btb_pre_error_flush,           //32:32
-                       btb_pre_error_flush_target     //31:0
-                      };
-
-assign ds_to_es_bus = {inst_csr_rstat_en,  // 349:349 for difftest
+assign ds_to_es_bus = {
+                       inst_csr_rstat_en,  // 349:349 for difftest
                        inst_st_en       ,  // 348:341 for difftest
                        inst_ld_en       ,  // 340:333 for difftest
                        (inst_rdcntvl_w | inst_rdcntvh_w | inst_rdcntid_w), //332:332  for difftest
@@ -357,19 +357,19 @@ assign fs_excp = fs_to_ds_bus[68];
 //wait inst will stall at ds.
 assign ds_ready_go    = !(rf2_forward_stall || rf1_forward_stall|| /*idle_stall ||*/ tlb_inst_stall || ibar_stall || dbar_stall || jirl_stall) || excp;
 assign ds_allowin     = !ds_valid || ds_ready_go && es_allowin;
-assign ds_to_es_valid = ds_valid && ds_ready_go;
+assign ds_to_es_valid = ds_valid && ds_ready_go && !btb_pre_error_flush;
 always @(posedge clk) begin   //bug1 no reset; branch no delay slot
-    if (reset || flush_sign) begin
+    if (reset || flush_sign || btb_pre_error_flush) begin
         ds_valid <= 1'b0;
     end
     else begin 
         if (ds_allowin) begin   //bug2 ??
-            if ((btb_pre_error_flush && es_allowin) || branch_slot_cancel) begin
-                ds_valid <= 1'b0;
-            end
-            else begin
+            // if(btb_pre_error_flush) begin
+                // ds_valid <= 1'b0;
+            // end
+            // else begin
                 ds_valid <= fs_to_ds_valid;
-            end
+            // end
         end
     end
 
@@ -754,42 +754,6 @@ assign {ms_dep_need_stall,
        } = ms_to_ds_forward_bus;
 
 //exe stage first forward
-assign {rf1_forward_stall, rj_value, rj_value_forward_es} = ((rf_raddr1 == es_forward_reg) && es_forward_enable && inst_need_rj) ? {es_dep_need_stall, es_forward_data, es_forward_data} :
-                                                            ((rf_raddr1 == ms_forward_reg) && ms_forward_enable && inst_need_rj) ? {ms_dep_need_stall || br_need_reg_data, ms_forward_data, rf_rdata1} :
-                                                                                                                                   {1'b0, rf_rdata1, rf_rdata1}; 
-
-assign {rf2_forward_stall, rkd_value, rkd_value_forward_es} = ((rf_raddr2 == es_forward_reg) && es_forward_enable && inst_need_rkd) ? {es_dep_need_stall, es_forward_data, es_forward_data} :
-                                                              ((rf_raddr2 == ms_forward_reg) && ms_forward_enable && inst_need_rkd) ? {ms_dep_need_stall || br_need_reg_data, ms_forward_data, rf_rdata2} :
-                                                                                                                                      {1'b0, rf_rdata2, rf_rdata2};
-
-assign rj_eq_rd        = (rj_value_forward_es == rkd_value_forward_es);
-assign rj_lt_rd_unsign = (rj_value_forward_es < rkd_value_forward_es);   //operate "<" has nice timing
-assign rj_lt_rd_sign   = (rj_value_forward_es[31] && ~rkd_value_forward_es[31]) ? 1'b1 :
-                         (~rj_value_forward_es[31] && rkd_value_forward_es[31]) ? 1'b0 : rj_lt_rd_unsign;                         
-                                                            
-assign br_taken  = (   inst_beq  &&  rj_eq_rd
-                    || inst_bne  && !rj_eq_rd
-                    || inst_blt  &&  rj_lt_rd_sign
-                    || inst_bge  && !rj_lt_rd_sign
-                    || inst_bltu &&  rj_lt_rd_unsign
-                    || inst_bgeu && !rj_lt_rd_unsign
-                    || inst_jirl
-                    || inst_bl
-                    || inst_b
-                    ) && ds_valid && !ds_excp; 
-
-assign br_inst = br_need_reg_data || inst_bl || inst_b;
-
-assign br_to_btb = inst_beq   ||
-                   inst_bne   ||
-                   inst_blt   ||
-                   inst_bge   ||
-                   inst_bltu  ||
-                   inst_bgeu  ||
-                   inst_bl    ||
-                   inst_b     || 
-                   inst_jirl;
-
 assign br_need_reg_data = inst_beq   ||
                           inst_bne   ||
                           inst_blt   ||
@@ -798,14 +762,13 @@ assign br_need_reg_data = inst_beq   ||
                           inst_bgeu  ||
                           inst_jirl;
 
-assign br_target = ({32{inst_beq || inst_bne || inst_bl || inst_b || 
-                    inst_blt || inst_bge || inst_bltu || inst_bgeu}} & (ds_pc + ds_imm   ))  |
-                   ({32{inst_jirl}}                                  & (rf_rdata1 + ds_imm)) ;
+assign {rf1_forward_stall, rj_value, rj_value_forward_es} = ((rf_raddr1 == es_forward_reg) && es_forward_enable && inst_need_rj) ? {es_dep_need_stall, es_forward_data, es_forward_data} :
+                                                            ((rf_raddr1 == ms_forward_reg) && ms_forward_enable && inst_need_rj) ? {ms_dep_need_stall || br_need_reg_data, ms_forward_data, rf_rdata1} :
+                                                                                                                                   {1'b0, rf_rdata1, rf_rdata1}; 
 
-assign jirl_stall = inst_jirl && ((rf_raddr1 == es_forward_reg) && es_forward_enable || 
-                                  (rf_raddr1 == ms_forward_reg) && ms_forward_enable );
-                   
-
+assign {rf2_forward_stall, rkd_value, rkd_value_forward_es} = ((rf_raddr2 == es_forward_reg) && es_forward_enable && inst_need_rkd) ? {es_dep_need_stall, es_forward_data, es_forward_data} :
+                                                              ((rf_raddr2 == ms_forward_reg) && ms_forward_enable && inst_need_rkd) ? {ms_dep_need_stall || br_need_reg_data, ms_forward_data, rf_rdata2} :
+                                                                                                                                      {1'b0, rf_rdata2, rf_rdata2};
 //assign idle_stall = inst_idle & ds_valid & !has_int;
 
 assign excp     = excp_ipe | inst_syscall | inst_break | ds_excp | excp_ine | has_int;
@@ -908,36 +871,7 @@ assign kernel_inst = inst_csrrd    |
 
 assign excp_ipe = kernel_inst && (csr_plv == 2'b11);
 
-//branch slot cancel, need wait next valid inst after branch
-//only valid br_taken sign can generate slot_cancel.
-always @(posedge clk) begin
-    if (reset || flush_sign) begin
-    //flush signal need flush this buffer
-        branch_slot_cancel <= 1'b0;
-    end
-    else if (btb_pre_error_flush && es_allowin && !fs_to_ds_valid) begin
-        branch_slot_cancel <= 1'b1;
-    end
-    else if (branch_slot_cancel && fs_to_ds_valid) begin
-        branch_slot_cancel <= 1'b0;
-    end
-end
-
-assign btb_operate_en    = ds_valid && ds_allowin && !ds_excp;
-assign btb_operate_pc    = ds_pc;
-assign btb_pop_ras       = inst_jirl; 
-assign btb_push_ras      = inst_bl;
-assign btb_add_entry     = br_to_btb && !ds_btb_en && br_taken;
-assign btb_delete_entry  = !br_to_btb && ds_btb_en;
-assign btb_pre_error     = br_to_btb && ds_btb_en && (ds_btb_taken ^ br_taken);
-assign btb_target_error  = br_to_btb && ds_btb_en && (ds_btb_taken && br_taken) && (ds_btb_target != br_target);
-assign btb_pre_right     = br_to_btb && ds_btb_en && !(ds_btb_taken ^ br_taken);
-assign btb_right_orien   = br_taken;
-assign btb_right_target  = br_target;
-assign btb_operate_index = ds_btb_index;
-
-assign btb_pre_error_flush = (btb_add_entry || btb_delete_entry || btb_pre_error || btb_target_error) && ds_valid && ds_ready_go && !ds_excp;
-assign btb_pre_error_flush_target = br_taken ? br_target : ds_pc + 32'h4;
+assign {btb_pre_error_flush,btb_pre_error_flush_target} = br_bus;
 
 //ibar dbar
 assign pipeline_no_empty = es_to_ds_valid || ms_to_ds_valid || ws_to_ds_valid || !write_buffer_empty;

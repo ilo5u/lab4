@@ -1,4 +1,0 @@
-Frequency: MHz
-WNS: ns
-WHS: ns
-WPWS: 0ns

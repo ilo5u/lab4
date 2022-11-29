@@ -2,7 +2,7 @@
 
 module addr_trans
 #(
-    parameter TLBNUM = 2 // chengxin: tlb
+    parameter TLBNUM = 2
 )
 (
     input                  clk                  ,
@@ -33,7 +33,7 @@ module addr_trans
     output [19:0]          data_tag             ,
     output [ 3:0]          data_offset          ,
     output                 data_tlb_found       ,
-    output           data_tlb_index       , // chengxin: tlb
+    output [ 4:0]          data_tlb_index       ,
     output                 data_tlb_v           ,
     output                 data_tlb_d           ,
     output [ 1:0]          data_tlb_mat         ,
@@ -41,7 +41,7 @@ module addr_trans
     //tlbwi tlbwr tlb write
     input                  tlbfill_en           ,
     input                  tlbwr_en             ,
-    input            rand_index           , // chengxin: tlb
+    input            rand_index           ,
     input  [31:0]          tlbehi_in            ,
     input  [31:0]          tlbelo0_in           ,
     input  [31:0]          tlbelo1_in           ,
@@ -76,7 +76,7 @@ wire [ 5:0] s1_ps       ;
 wire [19:0] s1_ppn      ;
 
 wire        we          ;
-wire  w_index     ; // chengxin: tlb
+wire [ 4:0] w_index     ;
 wire [18:0] w_vppn      ;
 wire        w_g         ;
 wire [ 5:0] w_ps        ;
@@ -92,7 +92,7 @@ wire [ 1:0] w_mat1      ;
 wire [ 1:0] w_plv1      ;
 wire [19:0] w_ppn1      ;
 
-wire  r_index     ; // chengxin: tlb
+wire  r_index     ;
 wire [18:0] r_vppn      ;
 wire [ 9:0] r_asid      ;
 wire        r_g         ;
@@ -131,8 +131,7 @@ assign s1_odd_page = data_vaddr[12];
 
 //trans write port sig
 assign we      = tlbfill_en || tlbwr_en;
-// assign w_index = (tlbfill_en & rand_index) | (tlbwr_en & tlbidx_in[`INDEX]); // chengxin: tlb
-assign w_index = (tlbfill_en && rand_index) | (tlbwr_en && tlbidx_in[0]); // chengxin: tlb
+assign w_index = (tlbfill_en && rand_index) | (tlbwr_en && tlbidx_in[0]);
 assign w_vppn  = tlbehi_in[`VPPN];
 assign w_g     = tlbelo0_in[`TLB_G] && tlbelo1_in[`TLB_G];
 assign w_ps    = tlbidx_in[`PS];
@@ -149,7 +148,6 @@ assign w_mat1  = tlbelo1_in[`TLB_MAT];
 assign w_ppn1  = tlbelo1_in[`TLB_PPN_EN];
 
 //trans read port sig
-// assign r_index      = tlbidx_in[`INDEX]; // chengxin: tlb
 assign r_index      = tlbidx_in[0];
 assign tlbehi_out   = {r_vppn, 13'b0};
 assign tlbelo0_out  = {4'b0, r_ppn0, 1'b0, r_g, r_mat0, r_plv0, r_d0, r_v0};

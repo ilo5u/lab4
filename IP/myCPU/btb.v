@@ -125,7 +125,6 @@ always @(posedge clk) begin
     end
 end
 
-// target:30 counter:2 jirl_flag:1
 assign {match_target, match_counter, match_index, match_jirl_flag} = {36{match_rd[0 ]}} & {target[0 ], counter[0 ], 3'd0 , jirl_flag[0 ]} |
                                                                      {36{match_rd[1 ]}} & {target[1 ], counter[1 ], 3'd1 , jirl_flag[1 ]} |
                                                                      {36{match_rd[2 ]}} & {target[2 ], counter[2 ], 3'd2 , jirl_flag[2 ]} |

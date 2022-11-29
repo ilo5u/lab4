@@ -44,7 +44,7 @@ module csr(
     output                          disable_cache_out,
     //to addr trans
     output [ 9:0]                   asid_out     ,
-    output                    rand_index   , // chengxin: tlb
+    output                    rand_index   ,
     output [31:0]                   tlbehi_out   ,
     output [31:0]                   tlbelo0_out  ,
     output [31:0]                   tlbelo1_out  ,
@@ -223,7 +223,7 @@ assign tlbehi_out   = csr_tlbehi;
 assign tlbelo0_out  = csr_tlbelo0;
 assign tlbelo1_out  = csr_tlbelo1;
 assign tlbidx_out   = csr_tlbidx;
-assign rand_index   = timer_64[0]; // chengxin: tlb
+assign rand_index   = timer_64[0];
 assign disable_cache_out = csr_disable_cache[0];
 
 //forward to if stage
@@ -413,14 +413,12 @@ always @(posedge clk) begin
         csr_tlbidx[30]    <= 1'b0;
     end
     else if (tlbidx_wen) begin
-        // csr_tlbidx[`INDEX] <= wr_data[`INDEX]; // chengxin: tlb
         csr_tlbidx[0] <= wr_data[0];
         csr_tlbidx[`PS]    <= wr_data[`PS];
         csr_tlbidx[`NE]    <= wr_data[`NE];
     end
     else if (tlbsrch_en) begin
         if (tlbsrch_found) begin
-            // csr_tlbidx[`INDEX] <= tlbsrch_index; // chengxin: tlb
             csr_tlbidx[0] <= tlbsrch_index;
             csr_tlbidx[`NE]    <= 1'b0;
         end

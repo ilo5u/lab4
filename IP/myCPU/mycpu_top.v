@@ -93,7 +93,7 @@ wire [31:0]  div_result;
 wire [31:0]  mod_result;
 wire [63:0]  mul_result;
 wire [ 9:0]  csr_asid;
-wire   rand_index; // chengxin: tlb
+wire   rand_index;
 wire [31:0]  tlbw_tlbehi;
 wire [31:0]  tlbw_tlbelo0;
 wire [31:0]  tlbw_tlbelo1;
@@ -171,6 +171,7 @@ wire         ms_tlb_inst_stall;
 wire         ws_tlb_inst_stall;
 wire         data_fetch;
 wire [`FS_TO_DS_BUS_WD -1:0] fs_to_ds_bus;
+wire [`BTB_BUS_WD -1:0] btb_bus;
 wire [`DS_TO_ES_BUS_WD -1:0] ds_to_es_bus;
 wire [`ES_TO_MS_BUS_WD -1:0] es_to_ms_bus;
 wire [`MS_TO_WS_BUS_WD -1:0] ms_to_ws_bus;
@@ -324,6 +325,8 @@ if_stage if_stage(
 id_stage id_stage(
     .clk                  (aclk                ),
     .reset                (reset               ),
+    //brbus
+    .br_bus               (br_bus              ),
     //allowin
     .es_allowin           (es_allowin          ),
     .ds_allowin           (ds_allowin          ),
@@ -336,8 +339,7 @@ id_stage id_stage(
     //to es
     .ds_to_es_valid       (ds_to_es_valid      ),
     .ds_to_es_bus         (ds_to_es_bus        ),
-    //to fs
-    .br_bus               (br_bus              ),
+    .btb_bus              (btb_bus             ),
     //exception
     .excp_flush           (excp_flush          ),
     .ertn_flush           (ertn_flush          ),
@@ -366,6 +368,32 @@ id_stage id_stage(
     .ws_to_ds_valid       (ws_to_ds_valid      ),
     //from axi 
     .write_buffer_empty   (write_buffer_empty  ),
+    //to rf: for write back
+    .ws_to_rf_bus         (ws_to_rf_bus        )
+    `ifdef DIFFTEST_EN
+    ,
+    .rf_to_diff           (regs                )
+    `endif
+);
+// EXE stage
+exe_stage exe_stage(
+    .clk                  (aclk                ),
+    .reset                (reset               ),
+    //to fs
+    .br_bus               (br_bus              ),
+    //allowin
+    .ms_allowin           (ms_allowin          ),
+    .es_allowin           (es_allowin          ),
+    //from ds
+    .ds_to_es_valid       (ds_to_es_valid      ),
+    .ds_to_es_bus         (ds_to_es_bus        ),
+    .btb_bus              (btb_bus             ),
+    //to ms
+    .es_to_ms_valid       (es_to_ms_valid      ),
+    .es_to_ms_bus         (es_to_ms_bus        ),
+    //to ds forward path
+    .es_to_ds_forward_bus (es_to_ds_forward_bus),
+    .es_to_ds_valid       (es_to_ds_valid      ), 
     //to btb
     .btb_operate_en       (btb_operate_en      ),
     .btb_pop_ras          (btb_pop_ras         ),
@@ -379,29 +407,6 @@ id_stage id_stage(
     .btb_right_target     (btb_right_target    ),
     .btb_operate_pc       (btb_operate_pc      ),
     .btb_operate_index    (btb_operate_index   ),
-    //to rf: for write back
-    .ws_to_rf_bus         (ws_to_rf_bus        )
-    `ifdef DIFFTEST_EN
-    ,
-    .rf_to_diff           (regs                )
-    `endif
-);
-// EXE stage
-exe_stage exe_stage(
-    .clk                  (aclk                ),
-    .reset                (reset               ),
-    //allowin
-    .ms_allowin           (ms_allowin          ),
-    .es_allowin           (es_allowin          ),
-    //from ds
-    .ds_to_es_valid       (ds_to_es_valid      ),
-    .ds_to_es_bus         (ds_to_es_bus        ),
-    //to ms
-    .es_to_ms_valid       (es_to_ms_valid      ),
-    .es_to_ms_bus         (es_to_ms_bus        ),
-    //to ds forward path
-    .es_to_ds_forward_bus (es_to_ds_forward_bus),
-    .es_to_ds_valid       (es_to_ds_valid      ), 
     //div_mul
     .es_div_enable        (es_div_enable       ),
     .es_mul_div_sign      (es_mul_div_sign     ),

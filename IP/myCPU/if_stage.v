@@ -184,11 +184,15 @@ always @(posedge clk) begin
             if (flush_sign) begin
                 br_target_inst_req_state <= br_target_inst_req_empty; 
             end
-            else if(btb_pre_error_flush && !fs_valid && !inst_addr_ok) begin
-                br_target_inst_req_state  <= br_target_inst_req_wait_slot;
-                br_target_inst_req_buffer <= btb_pre_error_flush_target;
-            end
-            else if(btb_pre_error_flush && !inst_addr_ok && fs_valid || btb_pre_error_flush && inst_addr_ok && !fs_valid) begin
+            // else if(btb_pre_error_flush && !fs_valid && !inst_addr_ok) begin
+            //     br_target_inst_req_state  <= br_target_inst_req_wait_slot;
+            //     br_target_inst_req_buffer <= btb_pre_error_flush_target;
+            // end
+            // else if(btb_pre_error_flush && !inst_addr_ok && fs_valid || btb_pre_error_flush && inst_addr_ok && !fs_valid) begin
+            //     br_target_inst_req_state  <= br_target_inst_req_wait_br_target;
+            //     br_target_inst_req_buffer <= btb_pre_error_flush_target;
+            // end
+            else if(btb_pre_error_flush && !inst_addr_ok && fs_valid || btb_pre_error_flush && !fs_valid && !inst_addr_ok) begin
                 br_target_inst_req_state  <= br_target_inst_req_wait_br_target;
                 br_target_inst_req_buffer <= btb_pre_error_flush_target;
             end
@@ -220,7 +224,7 @@ assign nextpc       = (excp_flush && !excp_tlbrefill)               ? csr_eentry
                       (excp_flush && excp_tlbrefill)                ? csr_tlbrentry              :
                       ertn_flush                                    ? csr_era                    :
                       (refetch_flush || icacop_flush || idle_flush) ? (ws_pc + 32'h4)            :
-                      btb_pre_error_flush && fs_valid               ? btb_pre_error_flush_target :
+                      btb_pre_error_flush                           ? btb_pre_error_flush_target :
                       fetch_btb_target                              ? btb_ret_pc                 :
                                                                       seq_pc;                                                   
 
@@ -240,7 +244,7 @@ assign fs_inst     = (inst_buff_enable) ? inst_rd_buff : inst_rdata;
 
 //inst read buffer  use for stall situation
 always @(posedge clk) begin
-    if (reset || (fs_ready_go && ds_allowin) || flush_sign) begin
+    if (reset || (fs_ready_go && ds_allowin) || flush_sign || btb_pre_error_flush) begin
         inst_rd_buff <= 32'b0;
         inst_buff_enable  <= 1'b0;
     end
@@ -289,11 +293,14 @@ assign fs_ready_go    = inst_data_ok || inst_buff_enable || excp;
 assign fs_allowin     = !fs_valid || fs_ready_go && ds_allowin;
 assign fs_to_ds_valid =  fs_valid && fs_ready_go;
 always @(posedge clk) begin
-    if (reset || flush_inst_delay) begin
+    if (reset || flush_inst_delay /*|| btb_pre_error_flush*/) begin
         fs_valid <= 1'b0;
     end
     else if (fs_allowin) begin
         fs_valid <= to_fs_valid;
+    end
+    else if (btb_pre_error_flush) begin
+        fs_valid <= inst_addr_ok;
     end
 
     if (reset) begin
@@ -301,7 +308,7 @@ always @(posedge clk) begin
         fs_excp      <= 1'b0;
         fs_excp_num  <= 4'b0;
     end
-    else if (to_fs_valid && (fs_allowin || flush_inst_go_dirt)) begin
+    else if (to_fs_valid && (fs_allowin || flush_inst_go_dirt || btb_pre_error_flush && inst_addr_ok)) begin
         fs_pc        <= real_nextpc;
         fs_excp      <= pfs_excp;
         fs_excp_num  <= pfs_excp_num;

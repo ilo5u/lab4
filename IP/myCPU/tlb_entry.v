@@ -1,6 +1,6 @@
 module tlb_entry
 #(
-    parameter TLBNUM = 2 // chengxin: tlb
+    parameter TLBNUM = 2
 )
 (
     input        clk,
@@ -10,7 +10,7 @@ module tlb_entry
     input                       s0_odd_page ,
     input  [ 9:0]               s0_asid     ,
     output                      s0_found    ,
-    output  s0_index    , // chengxin: tlb
+    output  s0_index    ,
     output [ 5:0]               s0_ps       ,
     output [19:0]               s0_ppn      ,
     output                      s0_v        ,
@@ -23,7 +23,7 @@ module tlb_entry
     input                       s1_odd_page ,
     input  [ 9:0]               s1_asid     ,
     output                      s1_found    ,
-    output  s1_index    , // chengxin: tlb
+    output  s1_index    ,
     output [ 5:0]               s1_ps       ,
     output [19:0]               s1_ppn      ,
     output                      s1_v        ,
@@ -32,7 +32,7 @@ module tlb_entry
     output [ 1:0]               s1_plv      ,
     // write port 
     input                       we          ,
-    input   w_index     , // chengxin: tlb
+    input   w_index     ,
     input  [18:0]               w_vppn      ,
     input  [ 9:0]               w_asid      ,
     input                       w_g         ,
@@ -49,7 +49,7 @@ module tlb_entry
     input  [ 1:0]               w_plv1      ,
     input  [19:0]               w_ppn1      ,
     // read port
-    input   r_index     , // chengxin: tlb
+    input   r_index     ,
     output [18:0]               r_vppn      ,
     output [ 9:0]               r_asid      ,
     output                      r_g         ,
@@ -114,10 +114,11 @@ endgenerate
 assign s0_found = !(!match0);
 assign s1_found = !(!match1);
 
-// chengxin: tlb tlb_ps:6 tlb_ppn1:20 tlb_v1:1 tlb_d1:1 tlb_mat1:2 tlb_plv1:2
 assign {s0_index, s0_ps, s0_ppn, s0_v, s0_d, s0_mat, s0_plv} = {33{match0[0] & s0_odd_page_buffer[0] }} & {1'b0, tlb_ps[0], tlb_ppn1[0], tlb_v1[0], tlb_d1[0], tlb_mat1[0], tlb_plv1[0]} |
-                                                               {33{match0[1] & s0_odd_page_buffer[1] }} & {1'b1, tlb_ps[1], tlb_ppn1[1], tlb_v1[1], tlb_d1[1], tlb_mat1[1], tlb_plv1[1]} ;
-// chengxin: tlb
+                                                               {33{match0[1] & s0_odd_page_buffer[1] }} & {1'b1, tlb_ps[1], tlb_ppn1[1], tlb_v1[1], tlb_d1[1], tlb_mat1[1], tlb_plv1[1]} |
+                                                               {33{match0[0] & ~s0_odd_page_buffer[0] }} & {1'b0, tlb_ps[0], tlb_ppn0[0], tlb_v0[0], tlb_d0[0], tlb_mat0[0], tlb_plv0[0]} |
+                                                               {33{match0[1] & ~s0_odd_page_buffer[1] }} & {1'b1, tlb_ps[1], tlb_ppn0[1], tlb_v0[1], tlb_d0[1], tlb_mat0[1], tlb_plv0[1]} ;
+
 assign {s1_index, s1_ps, s1_ppn, s1_v, s1_d, s1_mat, s1_plv} = {33{match1[0] & s1_odd_page_buffer[0] }} & {1'b0, tlb_ps[0], tlb_ppn1[0], tlb_v1[0], tlb_d1[0], tlb_mat1[0], tlb_plv1[0]} |
                                                                {33{match1[1] & s1_odd_page_buffer[1] }} & {1'b1, tlb_ps[1], tlb_ppn1[1], tlb_v1[1], tlb_d1[1], tlb_mat1[1], tlb_plv1[1]} |
                                                                {33{match1[0] & ~s1_odd_page_buffer[0] }} & {1'b0, tlb_ps[0], tlb_ppn0[0], tlb_v0[0], tlb_d0[0], tlb_mat0[0], tlb_plv0[0]} |

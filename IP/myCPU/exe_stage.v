@@ -4,18 +4,34 @@
 module exe_stage(
     input                               clk                 ,
     input                               reset               ,
+    //to fs
+    output [`BR_BUS_WD       -1:0]      br_bus        ,
     //allowin
     input                               ms_allowin          ,
     output                              es_allowin          ,
     //from ds
     input                               ds_to_es_valid      ,
     input  [`DS_TO_ES_BUS_WD -1:0]      ds_to_es_bus        ,
+    input  [`BTB_BUS_WD -1:0]      btb_bus             ,
     //to ms
     output                              es_to_ms_valid      ,
     output [`ES_TO_MS_BUS_WD -1:0]      es_to_ms_bus        ,
     //to ds forward path
     output [`ES_TO_DS_FORWARD_BUS -1:0] es_to_ds_forward_bus,
     output                              es_to_ds_valid      ,
+    //to btb
+    output                              btb_operate_en    ,
+    output                              btb_pop_ras       ,
+    output                              btb_push_ras      ,
+    output                              btb_add_entry     ,
+    output                              btb_delete_entry  ,
+    output                              btb_pre_error     ,
+    output                              btb_pre_right     ,
+    output                              btb_target_error  ,
+    output                              btb_right_orien   ,
+    output [31:0]                       btb_right_target  ,    
+    output [31:0]                       btb_operate_pc    ,
+    output [ 4:0]                       btb_operate_index ,
     //div_mul
     output        es_div_enable   ,
     output        es_mul_div_sign ,
@@ -135,7 +151,8 @@ wire        preld_inst       ;
 wire        es_br_pre_error  ;
 wire        es_br_pre        ;
 
-assign {es_csr_rstat_en  ,  //349:349  for difftest
+assign {
+        es_csr_rstat_en  ,  //349:349  for difftest
         es_inst_st_en    ,  //348:341  for difftest
         es_inst_ld_en    ,  //340:333  for difftst
         es_cnt_inst      ,  //332:332  for difftest
@@ -187,7 +204,20 @@ wire [31:0] es_alu_src2   ;
 wire [31:0] es_alu_result ;
 wire [31:0] exe_result    ;
 
-assign es_to_ms_bus = {es_csr_data      ,  //424:393  for difftest
+wire inst_beq;
+wire inst_bne;
+wire inst_blt;
+wire inst_bge;
+wire inst_blt;
+wire inst_bge;
+wire inst_bl ;
+wire inst_b  ;
+wire inst_jirl;
+wire inst_bltu;
+wire inst_bgeu;
+
+assign es_to_ms_bus = {
+                       es_csr_data      ,  //424:393  for difftest
                        es_csr_rstat_en  ,  //392:392  for difftest
                        data_wdata       ,  //391:360  for difftest
                        es_inst_st_en    ,  //359:352  for difftest
@@ -243,12 +273,23 @@ assign icacop_inst_stall = icacop_op_en && !icache_unbusy;
 assign es_ready_go    = (!div_stall && ((dcache_req_or_inst_en && data_addr_ok) || !(access_mem || dcacop_inst || preld_inst)) && !tlbsrch_stall && !icacop_inst_stall) || excp;
 assign es_allowin     = !es_valid || es_ready_go && ms_allowin;
 assign es_to_ms_valid =  es_valid && es_ready_go;
+reg es_first_touch;
 always @(posedge clk) begin
     if (reset || es_flush_sign) begin     
         es_valid <= 1'b0;
     end
     else if (es_allowin) begin 
         es_valid <= ds_to_es_valid;
+    end
+
+    if (reset || es_flush_sign) begin     
+        es_first_touch <= 1'b1;
+    end
+    else if (es_allowin) begin 
+        es_first_touch <= 1'b1;
+    end
+    else if(btb_pre_error_flush) begin
+        es_first_touch <= 1'b0;
     end
 
     if (ds_to_es_valid && es_allowin) begin
@@ -274,6 +315,96 @@ alu u_alu(
     );
 
 assign exe_result     = es_res_from_csr ? es_csr_data : es_alu_result;
+
+//bru
+reg  [`BTB_BUS_WD -1:0] btb_bus_r;
+always @(posedge clk) begin
+    if (ds_to_es_valid && es_allowin) begin
+        btb_bus_r <= btb_bus;
+    end
+end
+
+wire [31:0] es_btb_target;
+wire [ 4:0]es_btb_index;
+wire es_btb_taken;
+wire es_btb_en;
+
+assign {        inst_beq,
+        inst_bne,
+        inst_blt,
+        inst_bge,
+        inst_blt,
+        inst_bge,
+        inst_bl ,
+        inst_b  ,
+        inst_jirl,
+        inst_bltu,
+        inst_bgeu,
+    es_btb_target,  //108:77
+        es_btb_index,   //76:72
+        es_btb_taken,   //71:71
+        es_btb_en      //70:70 
+    } = btb_bus_r;
+
+assign rj_eq_rd        = (es_rj_value == es_rkd_value);
+assign rj_lt_rd_unsign = (es_rj_value < es_rkd_value);   //operate "<" has nice timing
+assign rj_lt_rd_sign   = (es_rj_value[31] && ~es_rkd_value[31]) ? 1'b1 :
+                         (~es_rj_value[31] && es_rkd_value[31]) ? 1'b0 : rj_lt_rd_unsign;                         
+                                                            
+wire br_taken  = (     inst_beq  &&  rj_eq_rd
+                    || inst_bne  && !rj_eq_rd
+                    || inst_blt  &&  rj_lt_rd_sign
+                    || inst_bge  && !rj_lt_rd_sign
+                    || inst_bltu &&  rj_lt_rd_unsign
+                    || inst_bgeu && !rj_lt_rd_unsign
+                    || inst_jirl
+                    || inst_bl
+                    || inst_b
+                    ) && es_valid && !es_excp;
+
+wire br_inst = br_need_reg_data || inst_bl || inst_b;
+
+wire br_to_btb = inst_beq   ||
+                 inst_bne   ||
+                 inst_blt   ||
+                 inst_bge   ||
+                 inst_bltu  ||
+                 inst_bgeu  ||
+                 inst_bl    ||
+                 inst_b     ||
+                 inst_jirl;
+
+wire br_need_reg_data = inst_beq   ||
+                        inst_bne   ||
+                        inst_blt   ||
+                        inst_bge   ||
+                        inst_bltu  ||
+                        inst_bgeu  ||
+                        inst_jirl;
+
+wire [31:0] br_target = ({32{inst_beq || inst_bne || inst_bl || inst_b || 
+                         inst_blt || inst_bge || inst_bltu || inst_bgeu}} & (es_pc + es_imm   ))  |
+                        ({32{inst_jirl}}                                  & (es_rj_value + es_imm)) ;
+
+assign btb_operate_en    = es_valid && es_allowin && !es_excp;
+assign btb_operate_pc    = es_pc;
+assign btb_pop_ras       = inst_jirl; 
+assign btb_push_ras      = inst_bl;
+assign btb_add_entry     =  br_to_btb && !es_btb_en && br_taken;
+assign btb_delete_entry  = !br_to_btb && es_btb_en;
+assign btb_pre_error     = br_to_btb && es_btb_en &&  (es_btb_taken ^  br_taken);
+assign btb_target_error  = br_to_btb && es_btb_en &&  (es_btb_taken && br_taken) && (es_btb_target != br_target);
+assign btb_pre_right     = br_to_btb && es_btb_en && !(es_btb_taken ^  br_taken);
+assign btb_right_orien   = br_taken;
+assign btb_right_target  = br_target;
+assign btb_operate_index = es_btb_index;
+
+wire btb_pre_error_flush = (btb_add_entry || btb_delete_entry || btb_pre_error || btb_target_error) && es_valid && es_ready_go && !es_excp && es_first_touch;
+wire [31:0]btb_pre_error_flush_target = br_taken ? br_target : es_pc + 32'h4;
+
+assign br_bus       = {btb_pre_error_flush,           //32:32
+                       btb_pre_error_flush_target     //31:0
+                      };
 
 //forward path
 assign dest_zero            = (es_dest == 5'b0); 
