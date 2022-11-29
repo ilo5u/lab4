@@ -114,14 +114,14 @@ endgenerate
 assign s0_found = !(!match0);
 assign s1_found = !(!match1);
 
+// chengxin: tlb tlb_ps:6 tlb_ppn1:20 tlb_v1:1 tlb_d1:1 tlb_mat1:2 tlb_plv1:2
+assign {s0_index, s0_ps, s0_ppn, s0_v, s0_d, s0_mat, s0_plv} = {33{match0[0] & s0_odd_page_buffer[0] }} & {1'b0, tlb_ps[0], tlb_ppn1[0], tlb_v1[0], tlb_d1[0], tlb_mat1[0], tlb_plv1[0]} |
+                                                               {33{match0[1] & s0_odd_page_buffer[1] }} & {1'b1, tlb_ps[1], tlb_ppn1[1], tlb_v1[1], tlb_d1[1], tlb_mat1[1], tlb_plv1[1]} ;
 // chengxin: tlb
-assign {s0_index, s0_ps, s0_ppn, s0_v, s0_d, s0_mat, s0_plv} = {37{match0[0] & s0_odd_page_buffer[0] }} & {1'b0, tlb_ps[0], tlb_ppn1[0], tlb_v1[0], tlb_d1[0], tlb_mat1[0], tlb_plv1[0]} |
-                                                               {37{match0[1] & s0_odd_page_buffer[1] }} & {1'b1, tlb_ps[1], tlb_ppn1[1], tlb_v1[1], tlb_d1[1], tlb_mat1[1], tlb_plv1[1]} ;
-// chengxin: tlb
-assign {s1_index, s1_ps, s1_ppn, s1_v, s1_d, s1_mat, s1_plv} = {37{match1[0] & s1_odd_page_buffer[0] }} & {1'b0, tlb_ps[0], tlb_ppn1[0], tlb_v1[0], tlb_d1[0], tlb_mat1[0], tlb_plv1[0]} |
-                                                               {37{match1[1] & s1_odd_page_buffer[1] }} & {1'b1, tlb_ps[1], tlb_ppn1[1], tlb_v1[1], tlb_d1[1], tlb_mat1[1], tlb_plv1[1]} |
-                                                               {37{match1[0] & ~s1_odd_page_buffer[0] }} & {1'b0, tlb_ps[0], tlb_ppn0[0], tlb_v0[0], tlb_d0[0], tlb_mat0[0], tlb_plv0[0]} |
-                                                               {37{match1[1] & ~s1_odd_page_buffer[1] }} & {1'b1, tlb_ps[1], tlb_ppn0[1], tlb_v0[1], tlb_d0[1], tlb_mat0[1], tlb_plv0[1]} ;
+assign {s1_index, s1_ps, s1_ppn, s1_v, s1_d, s1_mat, s1_plv} = {33{match1[0] & s1_odd_page_buffer[0] }} & {1'b0, tlb_ps[0], tlb_ppn1[0], tlb_v1[0], tlb_d1[0], tlb_mat1[0], tlb_plv1[0]} |
+                                                               {33{match1[1] & s1_odd_page_buffer[1] }} & {1'b1, tlb_ps[1], tlb_ppn1[1], tlb_v1[1], tlb_d1[1], tlb_mat1[1], tlb_plv1[1]} |
+                                                               {33{match1[0] & ~s1_odd_page_buffer[0] }} & {1'b0, tlb_ps[0], tlb_ppn0[0], tlb_v0[0], tlb_d0[0], tlb_mat0[0], tlb_plv0[0]} |
+                                                               {33{match1[1] & ~s1_odd_page_buffer[1] }} & {1'b1, tlb_ps[1], tlb_ppn0[1], tlb_v0[1], tlb_d0[1], tlb_mat0[1], tlb_plv0[1]} ;
 
 always @(posedge clk) begin
     if (we) begin

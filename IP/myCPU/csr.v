@@ -413,13 +413,15 @@ always @(posedge clk) begin
         csr_tlbidx[30]    <= 1'b0;
     end
     else if (tlbidx_wen) begin
-        csr_tlbidx[`INDEX] <= wr_data[`INDEX];
+        // csr_tlbidx[`INDEX] <= wr_data[`INDEX]; // chengxin: tlb
+        csr_tlbidx[0] <= wr_data[0];
         csr_tlbidx[`PS]    <= wr_data[`PS];
         csr_tlbidx[`NE]    <= wr_data[`NE];
     end
     else if (tlbsrch_en) begin
         if (tlbsrch_found) begin
-            csr_tlbidx[`INDEX] <= tlbsrch_index;
+            // csr_tlbidx[`INDEX] <= tlbsrch_index; // chengxin: tlb
+            csr_tlbidx[0] <= tlbsrch_index;
             csr_tlbidx[`NE]    <= 1'b0;
         end
         else begin

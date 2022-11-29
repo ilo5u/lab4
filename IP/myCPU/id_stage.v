@@ -249,6 +249,7 @@ wire [31:0] rf_rdata2;
 wire        pipeline_no_empty;
 wire        dbar_stall;
 wire        ibar_stall;
+wire        jirl_stall;
 
 wire        rj_eq_rd;
 wire        rj_lt_rd_sign;
@@ -354,7 +355,7 @@ assign flush_sign = excp_flush || ertn_flush || refetch_flush || icacop_flush ||
 assign fs_excp = fs_to_ds_bus[68];
 
 //wait inst will stall at ds.
-assign ds_ready_go    = !(rf2_forward_stall || rf1_forward_stall/*|| idle_stall*/ || tlb_inst_stall || ibar_stall || dbar_stall) || excp;
+assign ds_ready_go    = !(rf2_forward_stall || rf1_forward_stall|| /*idle_stall ||*/ tlb_inst_stall || ibar_stall || dbar_stall || jirl_stall) || excp;
 assign ds_allowin     = !ds_valid || ds_ready_go && es_allowin;
 assign ds_to_es_valid = ds_valid && ds_ready_go;
 always @(posedge clk) begin   //bug1 no reset; branch no delay slot
@@ -798,8 +799,12 @@ assign br_need_reg_data = inst_beq   ||
                           inst_jirl;
 
 assign br_target = ({32{inst_beq || inst_bne || inst_bl || inst_b || 
-                    inst_blt || inst_bge || inst_bltu || inst_bgeu}} & (ds_pc + ds_imm   ))            |
-                   ({32{inst_jirl}}                                  & (rj_value_forward_es + ds_imm)) ;
+                    inst_blt || inst_bge || inst_bltu || inst_bgeu}} & (ds_pc + ds_imm   ))  |
+                   ({32{inst_jirl}}                                  & (rf_rdata1 + ds_imm)) ;
+
+assign jirl_stall = inst_jirl && ((rf_raddr1 == es_forward_reg) && es_forward_enable || 
+                                  (rf_raddr1 == ms_forward_reg) && ms_forward_enable );
+                   
 
 //assign idle_stall = inst_idle & ds_valid & !has_int;
 

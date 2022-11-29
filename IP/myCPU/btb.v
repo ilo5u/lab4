@@ -125,14 +125,15 @@ always @(posedge clk) begin
     end
 end
 
-assign {match_target, match_counter, match_index, match_jirl_flag} = {39{match_rd[0 ]}} & {target[0 ], counter[0 ], 3'd0 , jirl_flag[0 ]} |
-                                                                     {39{match_rd[1 ]}} & {target[1 ], counter[1 ], 3'd1 , jirl_flag[1 ]} |
-                                                                     {39{match_rd[2 ]}} & {target[2 ], counter[2 ], 3'd2 , jirl_flag[2 ]} |
-                                                                     {39{match_rd[3 ]}} & {target[3 ], counter[3 ], 3'd3 , jirl_flag[3 ]} |
-                                                                     {39{match_rd[4 ]}} & {target[4 ], counter[4 ], 3'd4 , jirl_flag[4 ]} |
-                                                                     {39{match_rd[5 ]}} & {target[5 ], counter[5 ], 3'd5 , jirl_flag[5 ]} |
-                                                                     {39{match_rd[6 ]}} & {target[6 ], counter[6 ], 3'd6 , jirl_flag[6 ]} |
-                                                                     {39{match_rd[7 ]}} & {target[7 ], counter[7 ], 3'd7 , jirl_flag[7 ]} ;
+// target:30 counter:2 jirl_flag:1
+assign {match_target, match_counter, match_index, match_jirl_flag} = {36{match_rd[0 ]}} & {target[0 ], counter[0 ], 3'd0 , jirl_flag[0 ]} |
+                                                                     {36{match_rd[1 ]}} & {target[1 ], counter[1 ], 3'd1 , jirl_flag[1 ]} |
+                                                                     {36{match_rd[2 ]}} & {target[2 ], counter[2 ], 3'd2 , jirl_flag[2 ]} |
+                                                                     {36{match_rd[3 ]}} & {target[3 ], counter[3 ], 3'd3 , jirl_flag[3 ]} |
+                                                                     {36{match_rd[4 ]}} & {target[4 ], counter[4 ], 3'd4 , jirl_flag[4 ]} |
+                                                                     {36{match_rd[5 ]}} & {target[5 ], counter[5 ], 3'd5 , jirl_flag[5 ]} |
+                                                                     {36{match_rd[6 ]}} & {target[6 ], counter[6 ], 3'd6 , jirl_flag[6 ]} |
+                                                                     {36{match_rd[7 ]}} & {target[7 ], counter[7 ], 3'd7 , jirl_flag[7 ]} ;
 
 assign ret_pc = match_jirl_flag ? {ras_buffer, 2'b0} : {match_target, 2'b0};
 assign ret_en = |match_rd;
