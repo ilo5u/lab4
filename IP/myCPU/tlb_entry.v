@@ -114,31 +114,31 @@ endgenerate
 assign s0_found = !(!match0);
 assign s1_found = !(!match1);
 
-assign {s0_index, s0_ps, s0_ppn, s0_v, s0_d, s0_mat, s0_plv} = {37{match0[0] & s0_odd_page_buffer[0] }} & {3'd0, tlb_ps[0], tlb_ppn1[0], tlb_v1[0], tlb_d1[0], tlb_mat1[0], tlb_plv1[0]} |
-                                                               {37{match0[1] & s0_odd_page_buffer[1] }} & {3'd1, tlb_ps[1], tlb_ppn1[1], tlb_v1[1], tlb_d1[1], tlb_mat1[1], tlb_plv1[1]} |
-                                                               {37{match0[2] & s0_odd_page_buffer[2] }} & {3'd2, tlb_ps[2], tlb_ppn1[2], tlb_v1[2], tlb_d1[2], tlb_mat1[2], tlb_plv1[2]} |
-                                                               {37{match0[3] & s0_odd_page_buffer[3] }} & {3'd3, tlb_ps[3], tlb_ppn1[3], tlb_v1[3], tlb_d1[3], tlb_mat1[3], tlb_plv1[3]} |
-                                                               {37{match0[4] & s0_odd_page_buffer[4] }} & {3'd4, tlb_ps[4], tlb_ppn1[4], tlb_v1[4], tlb_d1[4], tlb_mat1[4], tlb_plv1[4]} |
-                                                               {37{match0[5] & s0_odd_page_buffer[5] }} & {3'd5, tlb_ps[5], tlb_ppn1[5], tlb_v1[5], tlb_d1[5], tlb_mat1[5], tlb_plv1[5]} |
-                                                               {37{match0[6] & s0_odd_page_buffer[6] }} & {3'd6, tlb_ps[6], tlb_ppn1[6], tlb_v1[6], tlb_d1[6], tlb_mat1[6], tlb_plv1[6]} |
-                                                               {37{match0[7] & s0_odd_page_buffer[7] }} & {3'd7, tlb_ps[7], tlb_ppn1[7], tlb_v1[7], tlb_d1[7], tlb_mat1[7], tlb_plv1[7]} ;
+assign {s0_index, s0_ps, s0_ppn, s0_v, s0_d, s0_mat, s0_plv} = {35{match0[0] & s0_odd_page_buffer[0] }} & {3'd0, tlb_ps[0], tlb_ppn1[0], tlb_v1[0], tlb_d1[0], tlb_mat1[0], tlb_plv1[0]} |
+                                                               {35{match0[1] & s0_odd_page_buffer[1] }} & {3'd1, tlb_ps[1], tlb_ppn1[1], tlb_v1[1], tlb_d1[1], tlb_mat1[1], tlb_plv1[1]} |
+                                                               {35{match0[2] & s0_odd_page_buffer[2] }} & {3'd2, tlb_ps[2], tlb_ppn1[2], tlb_v1[2], tlb_d1[2], tlb_mat1[2], tlb_plv1[2]} |
+                                                               {35{match0[3] & s0_odd_page_buffer[3] }} & {3'd3, tlb_ps[3], tlb_ppn1[3], tlb_v1[3], tlb_d1[3], tlb_mat1[3], tlb_plv1[3]} |
+                                                               {35{match0[4] & s0_odd_page_buffer[4] }} & {3'd4, tlb_ps[4], tlb_ppn1[4], tlb_v1[4], tlb_d1[4], tlb_mat1[4], tlb_plv1[4]} |
+                                                               {35{match0[5] & s0_odd_page_buffer[5] }} & {3'd5, tlb_ps[5], tlb_ppn1[5], tlb_v1[5], tlb_d1[5], tlb_mat1[5], tlb_plv1[5]} |
+                                                               {35{match0[6] & s0_odd_page_buffer[6] }} & {3'd6, tlb_ps[6], tlb_ppn1[6], tlb_v1[6], tlb_d1[6], tlb_mat1[6], tlb_plv1[6]} |
+                                                               {35{match0[7] & s0_odd_page_buffer[7] }} & {3'd7, tlb_ps[7], tlb_ppn1[7], tlb_v1[7], tlb_d1[7], tlb_mat1[7], tlb_plv1[7]} ;
 
-assign {s1_index, s1_ps, s1_ppn, s1_v, s1_d, s1_mat, s1_plv} = {37{match1[0] & s1_odd_page_buffer[0] }} & {3'd0, tlb_ps[0], tlb_ppn1[0], tlb_v1[0], tlb_d1[0], tlb_mat1[0], tlb_plv1[0]} |
-                                                               {37{match1[1] & s1_odd_page_buffer[1] }} & {3'd1, tlb_ps[1], tlb_ppn1[1], tlb_v1[1], tlb_d1[1], tlb_mat1[1], tlb_plv1[1]} |
-                                                               {37{match1[2] & s1_odd_page_buffer[2] }} & {3'd2, tlb_ps[2], tlb_ppn1[2], tlb_v1[2], tlb_d1[2], tlb_mat1[2], tlb_plv1[2]} |
-                                                               {37{match1[3] & s1_odd_page_buffer[3] }} & {3'd3, tlb_ps[3], tlb_ppn1[3], tlb_v1[3], tlb_d1[3], tlb_mat1[3], tlb_plv1[3]} |
-                                                               {37{match1[4] & s1_odd_page_buffer[4] }} & {3'd4, tlb_ps[4], tlb_ppn1[4], tlb_v1[4], tlb_d1[4], tlb_mat1[4], tlb_plv1[4]} |
-                                                               {37{match1[5] & s1_odd_page_buffer[5] }} & {3'd5, tlb_ps[5], tlb_ppn1[5], tlb_v1[5], tlb_d1[5], tlb_mat1[5], tlb_plv1[5]} |
-                                                               {37{match1[6] & s1_odd_page_buffer[6] }} & {3'd6, tlb_ps[6], tlb_ppn1[6], tlb_v1[6], tlb_d1[6], tlb_mat1[6], tlb_plv1[6]} |
-                                                               {37{match1[7] & s1_odd_page_buffer[7] }} & {3'd7, tlb_ps[7], tlb_ppn1[7], tlb_v1[7], tlb_d1[7], tlb_mat1[7], tlb_plv1[7]} |
-                                                               {37{match1[0] & ~s1_odd_page_buffer[0] }} & {3'd0, tlb_ps[0], tlb_ppn0[0], tlb_v0[0], tlb_d0[0], tlb_mat0[0], tlb_plv0[0]} |
-                                                               {37{match1[1] & ~s1_odd_page_buffer[1] }} & {3'd1, tlb_ps[1], tlb_ppn0[1], tlb_v0[1], tlb_d0[1], tlb_mat0[1], tlb_plv0[1]} |
-                                                               {37{match1[2] & ~s1_odd_page_buffer[2] }} & {3'd2, tlb_ps[2], tlb_ppn0[2], tlb_v0[2], tlb_d0[2], tlb_mat0[2], tlb_plv0[2]} |
-                                                               {37{match1[3] & ~s1_odd_page_buffer[3] }} & {3'd3, tlb_ps[3], tlb_ppn0[3], tlb_v0[3], tlb_d0[3], tlb_mat0[3], tlb_plv0[3]} |
-                                                               {37{match1[4] & ~s1_odd_page_buffer[4] }} & {3'd4, tlb_ps[4], tlb_ppn0[4], tlb_v0[4], tlb_d0[4], tlb_mat0[4], tlb_plv0[4]} |
-                                                               {37{match1[5] & ~s1_odd_page_buffer[5] }} & {3'd5, tlb_ps[5], tlb_ppn0[5], tlb_v0[5], tlb_d0[5], tlb_mat0[5], tlb_plv0[5]} |
-                                                               {37{match1[6] & ~s1_odd_page_buffer[6] }} & {3'd6, tlb_ps[6], tlb_ppn0[6], tlb_v0[6], tlb_d0[6], tlb_mat0[6], tlb_plv0[6]} |
-                                                               {37{match1[7] & ~s1_odd_page_buffer[7] }} & {3'd7, tlb_ps[7], tlb_ppn0[7], tlb_v0[7], tlb_d0[7], tlb_mat0[7], tlb_plv0[7]} ;
+assign {s1_index, s1_ps, s1_ppn, s1_v, s1_d, s1_mat, s1_plv} = {35{match1[0] & s1_odd_page_buffer[0] }} & {3'd0, tlb_ps[0], tlb_ppn1[0], tlb_v1[0], tlb_d1[0], tlb_mat1[0], tlb_plv1[0]} |
+                                                               {35{match1[1] & s1_odd_page_buffer[1] }} & {3'd1, tlb_ps[1], tlb_ppn1[1], tlb_v1[1], tlb_d1[1], tlb_mat1[1], tlb_plv1[1]} |
+                                                               {35{match1[2] & s1_odd_page_buffer[2] }} & {3'd2, tlb_ps[2], tlb_ppn1[2], tlb_v1[2], tlb_d1[2], tlb_mat1[2], tlb_plv1[2]} |
+                                                               {35{match1[3] & s1_odd_page_buffer[3] }} & {3'd3, tlb_ps[3], tlb_ppn1[3], tlb_v1[3], tlb_d1[3], tlb_mat1[3], tlb_plv1[3]} |
+                                                               {35{match1[4] & s1_odd_page_buffer[4] }} & {3'd4, tlb_ps[4], tlb_ppn1[4], tlb_v1[4], tlb_d1[4], tlb_mat1[4], tlb_plv1[4]} |
+                                                               {35{match1[5] & s1_odd_page_buffer[5] }} & {3'd5, tlb_ps[5], tlb_ppn1[5], tlb_v1[5], tlb_d1[5], tlb_mat1[5], tlb_plv1[5]} |
+                                                               {35{match1[6] & s1_odd_page_buffer[6] }} & {3'd6, tlb_ps[6], tlb_ppn1[6], tlb_v1[6], tlb_d1[6], tlb_mat1[6], tlb_plv1[6]} |
+                                                               {35{match1[7] & s1_odd_page_buffer[7] }} & {3'd7, tlb_ps[7], tlb_ppn1[7], tlb_v1[7], tlb_d1[7], tlb_mat1[7], tlb_plv1[7]} |
+                                                               {35{match1[0] & ~s1_odd_page_buffer[0] }} & {3'd0, tlb_ps[0], tlb_ppn0[0], tlb_v0[0], tlb_d0[0], tlb_mat0[0], tlb_plv0[0]} |
+                                                               {35{match1[1] & ~s1_odd_page_buffer[1] }} & {3'd1, tlb_ps[1], tlb_ppn0[1], tlb_v0[1], tlb_d0[1], tlb_mat0[1], tlb_plv0[1]} |
+                                                               {35{match1[2] & ~s1_odd_page_buffer[2] }} & {3'd2, tlb_ps[2], tlb_ppn0[2], tlb_v0[2], tlb_d0[2], tlb_mat0[2], tlb_plv0[2]} |
+                                                               {35{match1[3] & ~s1_odd_page_buffer[3] }} & {3'd3, tlb_ps[3], tlb_ppn0[3], tlb_v0[3], tlb_d0[3], tlb_mat0[3], tlb_plv0[3]} |
+                                                               {35{match1[4] & ~s1_odd_page_buffer[4] }} & {3'd4, tlb_ps[4], tlb_ppn0[4], tlb_v0[4], tlb_d0[4], tlb_mat0[4], tlb_plv0[4]} |
+                                                               {35{match1[5] & ~s1_odd_page_buffer[5] }} & {3'd5, tlb_ps[5], tlb_ppn0[5], tlb_v0[5], tlb_d0[5], tlb_mat0[5], tlb_plv0[5]} |
+                                                               {35{match1[6] & ~s1_odd_page_buffer[6] }} & {3'd6, tlb_ps[6], tlb_ppn0[6], tlb_v0[6], tlb_d0[6], tlb_mat0[6], tlb_plv0[6]} |
+                                                               {35{match1[7] & ~s1_odd_page_buffer[7] }} & {3'd7, tlb_ps[7], tlb_ppn0[7], tlb_v0[7], tlb_d0[7], tlb_mat0[7], tlb_plv0[7]} ;
 
 always @(posedge clk) begin
     if (we) begin
