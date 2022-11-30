@@ -42,7 +42,7 @@ reg [29:0] ras_buffer;
 wire ras_full;
 wire ras_empty;
 
-reg [BTBNUM-1:0] match_rd;
+wire [BTBNUM-1:0] match_rd;
 
 wire [29:0] match_target;
 wire [ 1:0] match_counter;
@@ -65,7 +65,33 @@ assign select_one_invalid_entry = !valid[ 0] ? 3'd0  :
                                   !valid[ 4] ? 3'd4  :
                                   !valid[ 5] ? 3'd5  :
                                   !valid[ 6] ? 3'd6  :
-                                  !valid[ 7] ? 3'd7  : 3'h0; 
+                                  !valid[ 7] ? 3'd7  :
+                                               3'd0  ;
+                                  
+                                //   !valid[ 8] ? 5'd8  :
+                                //   !valid[ 9] ? 5'd9  :
+                                //   !valid[10] ? 5'd10 :
+                                //   !valid[11] ? 5'd11 :
+                                //   !valid[12] ? 5'd12 :
+                                //   !valid[13] ? 5'd13 :
+                                //   !valid[14] ? 5'd14 : 
+                                //   !valid[15] ? 5'd15 : 
+                                //   !valid[16] ? 5'd16 :
+                                //   !valid[17] ? 5'd17 :
+                                //   !valid[18] ? 5'd18 :
+                                //   !valid[19] ? 5'd19 :
+                                //   !valid[20] ? 5'd20 :
+                                //   !valid[21] ? 5'd21 :
+                                //   !valid[22] ? 5'd22 : 
+                                //   !valid[23] ? 5'd23 : 
+                                //   !valid[24] ? 5'd24 :
+                                //   !valid[25] ? 5'd25 :
+                                //   !valid[26] ? 5'd26 :
+                                //   !valid[27] ? 5'd27 :
+                                //   !valid[28] ? 5'd28 :
+                                //   !valid[29] ? 5'd29 :
+                                //   !valid[30] ? 5'd30 :
+                                //   !valid[31] ? 5'd31 : 5'h0; 
 
 always @(posedge clk) begin
     if (reset) begin
@@ -104,18 +130,18 @@ always @(posedge clk) begin
     
 end
 
+reg [9:0] fetch_pc_reg;
+always @(posedge clk) begin
+    if (fetch_en) begin
+        fetch_pc_reg <= fetch_pc[11:2];
+    end
+end
+
 genvar i;
 generate 
     for (i = 0; i < BTBNUM; i = i + 1)
-        begin: match
-        always @(posedge clk) begin
-            if (reset) begin
-                match_rd[i] <= 1'b0;
-            end
-            else if (fetch_en) begin
-                match_rd[i] <= (fetch_pc[11:2] == pc[i]) && valid[i] && !(jirl_flag[i] && ras_empty);
-            end
-        end
+        begin
+            assign match_rd[i] = (fetch_pc_reg == pc[i]) && valid[i] && !(jirl_flag[i] && ras_empty);
         end
 endgenerate
 
@@ -133,6 +159,31 @@ assign {match_target, match_counter, match_index, match_jirl_flag} = {36{match_r
                                                                      {36{match_rd[5 ]}} & {target[5 ], counter[5 ], 3'd5 , jirl_flag[5 ]} |
                                                                      {36{match_rd[6 ]}} & {target[6 ], counter[6 ], 3'd6 , jirl_flag[6 ]} |
                                                                      {36{match_rd[7 ]}} & {target[7 ], counter[7 ], 3'd7 , jirl_flag[7 ]} ;
+                                                                     /*|
+                                                                     {39{match_rd[8 ]}} & {target[8 ], counter[8 ], 5'd8 , jirl_flag[8 ]} |
+                                                                     {39{match_rd[9 ]}} & {target[9 ], counter[9 ], 5'd9 , jirl_flag[9 ]} |
+                                                                     {39{match_rd[10]}} & {target[10], counter[10], 5'd10, jirl_flag[10]} |
+                                                                     {39{match_rd[11]}} & {target[11], counter[11], 5'd11, jirl_flag[11]} |
+                                                                     {39{match_rd[12]}} & {target[12], counter[12], 5'd12, jirl_flag[12]} |
+                                                                     {39{match_rd[13]}} & {target[13], counter[13], 5'd13, jirl_flag[13]} |
+                                                                     {39{match_rd[14]}} & {target[14], counter[14], 5'd14, jirl_flag[14]} |
+                                                                     {39{match_rd[15]}} & {target[15], counter[15], 5'd15, jirl_flag[15]} |
+                                                                     {39{match_rd[16]}} & {target[16], counter[16], 5'd16, jirl_flag[16]} |
+                                                                     {39{match_rd[17]}} & {target[17], counter[17], 5'd17, jirl_flag[17]} |
+                                                                     {39{match_rd[18]}} & {target[18], counter[18], 5'd18, jirl_flag[18]} |
+                                                                     {39{match_rd[19]}} & {target[19], counter[19], 5'd19, jirl_flag[19]} |
+                                                                     {39{match_rd[20]}} & {target[20], counter[20], 5'd20, jirl_flag[20]} |
+                                                                     {39{match_rd[21]}} & {target[21], counter[21], 5'd21, jirl_flag[21]} |
+                                                                     {39{match_rd[22]}} & {target[22], counter[22], 5'd22, jirl_flag[22]} |
+                                                                     {39{match_rd[23]}} & {target[23], counter[23], 5'd23, jirl_flag[23]} |
+                                                                     {39{match_rd[24]}} & {target[24], counter[24], 5'd24, jirl_flag[24]} |
+                                                                     {39{match_rd[25]}} & {target[25], counter[25], 5'd25, jirl_flag[25]} |
+                                                                     {39{match_rd[26]}} & {target[26], counter[26], 5'd26, jirl_flag[26]} |
+                                                                     {39{match_rd[27]}} & {target[27], counter[27], 5'd27, jirl_flag[27]} |
+                                                                     {39{match_rd[28]}} & {target[28], counter[28], 5'd28, jirl_flag[28]} |
+                                                                     {39{match_rd[29]}} & {target[29], counter[29], 5'd29, jirl_flag[29]} |
+                                                                     {39{match_rd[30]}} & {target[30], counter[30], 5'd30, jirl_flag[30]} |
+                                                                     {39{match_rd[31]}} & {target[31], counter[31], 5'd31, jirl_flag[31]};*/
 
 assign ret_pc = match_jirl_flag ? {ras_buffer, 2'b0} : {match_target, 2'b0};
 assign ret_en = |match_rd;
