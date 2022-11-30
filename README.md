@@ -25,7 +25,7 @@ easily checkout from the `main` branch with clean `IP/myCPU` and `perf`, then yo
 |            8/8 |      68       | 0.228  | 0.052  | 0.562701 | 1.110x |
 |            opt |      75       | 0.105  | 0.049  | 0.534939 | 1.164x |
 | opt2 | 80 | 0.141 | 0.053 |  |  |
-| opt3 | 82 |  |  |  |  |
+| opt3 | 82 | 0.104 | 0.056 |  |  |
 
 以默认配置（32/32）作为基准，加速比计算公式为：
 
