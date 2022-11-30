@@ -28,6 +28,8 @@ easily checkout from the `main` branch with clean `IP/myCPU` and `perf`, then yo
 以默认配置（32/32）作为基准，加速比计算公式为：
 
 $$α=\frac{T_{base}}{T}=\frac{\frac{I_{total}}{T}}{\frac{I_{total}}{T_{base}}}=\frac{\frac{I_{total}}{C/F}}{\frac{I_{total}}{C_{base}/F_{base}}}=\frac{IPC\times F}{IPC_{base}\times F_{base}}$$
+## Performance
+![](./asserts/alpha.png)
 
 
 
