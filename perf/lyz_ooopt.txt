@@ -1,4 +1,4 @@
-Frequency: MHz
-WNS: 0ns
-WHS: 0ns
+Frequency: 82MHz
+WNS: 0.104ns
+WHS: 0.056ns
 WPWS: 0ns
