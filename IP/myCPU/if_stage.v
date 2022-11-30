@@ -86,6 +86,9 @@ wire         pfs_excp_num;
 
 wire         flush_sign;
 
+reg  [31:0]  inst_rd_buff;
+reg          inst_buff_enable;
+
 wire         da_mode;
 
 wire         btb_pre_error_flush;
@@ -105,62 +108,17 @@ wire         fs_excp_adef;
 assign {btb_pre_error_flush,
         btb_pre_error_flush_target  } = br_bus;
 
-reg  switch_buff_valid;
-reg  switch_ptr_his;
-wire switch_ptr;
-reg  [31:0]  sw_inst_rd_buff    ;
-reg  [31:0]  sw_pc_rd_buff      ;
-reg  [31:0]  sw_btb_ret_pc_buff ;
-reg  [ 4:0]  sw_btb_index_buff  ;
-reg          sw_btb_taken_buff  ;
-reg          sw_btb_en_buff     ;
-reg          sw_icache_miss_buff;
-reg          sw_excp_buff       ;
-reg  [ 3:0]  sw_excp_num_buff   ;
-reg          sw_inst_buff_enable;
-
-reg  [31:0]  inst_rd_buff    ;
-reg  [31:0]  pc_rd_buff      ;
-reg  [31:0]  btb_ret_pc_buff ;
-reg  [ 4:0]  btb_index_buff  ;
-reg          btb_taken_buff  ;
-reg          btb_en_buff     ;
-reg          icache_miss_buff;
-reg          excp_buff       ;
-reg  [ 3:0]  excp_num_buff   ;
-reg          inst_buff_enable;
-
-wire [31:0] btb_ret_pc_o;
-wire [ 4:0] btb_index_o;
-wire        btb_taken_o;
-wire        btb_en_o;
-wire        icache_miss_o;
-wire        excp_o;
-wire [ 3:0] excp_num_o;
-wire [31:0] fs_inst_o;
-wire [31:0] fs_pc_o;
-
-assign btb_ret_pc_o  = (inst_buff_enable && !switch_ptr) ? btb_ret_pc_buff  : switch_buff_valid ? sw_btb_ret_pc_buff  :btb_ret_pc ;
-assign btb_index_o   = (inst_buff_enable && !switch_ptr) ? btb_index_buff   : switch_buff_valid ? sw_btb_index_buff   :btb_index  ;
-assign btb_taken_o   = (inst_buff_enable && !switch_ptr) ? btb_taken_buff   : switch_buff_valid ? sw_btb_taken_buff   :btb_taken  ;
-assign btb_en_o      = (inst_buff_enable && !switch_ptr) ? btb_en_buff      : switch_buff_valid ? sw_btb_en_buff      :btb_en     ;
-assign icache_miss_o = (inst_buff_enable && !switch_ptr) ? icache_miss_buff : switch_buff_valid ? sw_icache_miss_buff :icache_miss;
-assign excp_o        = (inst_buff_enable && !switch_ptr) ? excp_buff        : switch_buff_valid ? sw_excp_buff        :excp       ;
-assign excp_num_o    = (inst_buff_enable && !switch_ptr) ? excp_num_buff    : switch_buff_valid ? sw_excp_num_buff    :excp_num   ;
-assign fs_inst_o     = (inst_buff_enable && !switch_ptr) ? inst_rd_buff     : switch_buff_valid ? sw_inst_rd_buff     :inst_rdata;
-assign fs_pc_o       = (inst_buff_enable && !switch_ptr) ? pc_rd_buff       : switch_buff_valid ? sw_pc_rd_buff       :fs_pc;
-
 wire [31:0] fs_inst;
 reg  [31:0] fs_pc;
-assign fs_to_ds_bus = {btb_ret_pc_o,      //108:77
-                       btb_index_o,       //76:72
-                       btb_taken_o,       //71:71
-                       btb_en_o,          //70:70
-                       icache_miss_o,     //69:69
-                       excp_o,            //68:68
-                       excp_num_o,        //67:64
-                       fs_inst_o,         //63:32
-                       fs_pc_o            //31:0
+assign fs_to_ds_bus = {btb_ret_pc,      //108:77
+                       btb_index,       //76:72
+                       btb_taken,       //71:71
+                       btb_en,          //70:70
+                       icache_miss,     //69:69
+                       excp,            //68:68
+                       excp_num,        //67:64
+                       fs_inst,         //63:32
+                       fs_pc            //31:0
                       };
 
 assign flush_sign = ertn_flush || excp_flush || refetch_flush || icacop_flush || idle_flush;
@@ -276,63 +234,25 @@ assign real_nextpc = (flush_inst_req_state == flush_inst_req_full)              
 assign tlb_excp_lock_pc = tlb_excp_cancel_req && br_target_inst_req_state != br_target_inst_req_wait_br_target && flush_inst_req_state != flush_inst_req_full;
 
 //when flush_sign meet icache_busy 1, flush_sign's inst valid should not set immediately
-wire fetch_stop = switch_buff_valid && inst_buff_enable || inst_buff_enable && inst_data_ok || switch_buff_valid && inst_data_ok;
-assign inst_valid = (!fetch_stop && !pfs_excp && !tlb_excp_lock_pc || flush_sign || btb_pre_error_flush) && !(idle_flush || idle_lock);
+assign inst_valid = (fs_allowin && !pfs_excp && !tlb_excp_lock_pc || flush_sign || btb_pre_error_flush) && !(idle_flush || idle_lock);
 assign inst_op     = 1'b0;
 assign inst_wstrb  = 4'h0;
 assign inst_addr   = real_nextpc; //nextpc
 assign inst_wdata  = 32'b0;
 
+assign fs_inst     = (inst_buff_enable) ? inst_rd_buff : inst_rdata;
+
 //inst read buffer  use for stall situation
 always @(posedge clk) begin
-    if (reset || (fs_ready_go && ds_allowin && !switch_ptr) || flush_sign || btb_pre_error_flush) begin
+    if (reset || (fs_ready_go && ds_allowin) || flush_sign || btb_pre_error_flush) begin
         inst_rd_buff <= 32'b0;
         inst_buff_enable  <= 1'b0;
     end
-    else if (inst_data_ok && !(ds_allowin && !switch_ptr) && !inst_buff_enable) begin
-        inst_rd_buff     <= inst_rdata;
-        pc_rd_buff       <= fs_pc;
-        btb_ret_pc_buff  <= btb_ret_pc;
-        btb_index_buff   <= btb_index;
-        btb_taken_buff   <= btb_taken;
-        btb_en_buff      <= btb_en;
-        icache_miss_buff <= icache_miss;
-        excp_buff        <= excp;
-        excp_num_buff    <= excp_num;
-
+    else if ((inst_data_ok) && !ds_allowin) begin
+        inst_rd_buff <= inst_rdata;
         inst_buff_enable  <= 1'b1;
     end
 end
-
-always @(posedge clk) begin
-    if (reset || (fs_ready_go && ds_allowin && switch_ptr) || flush_sign || btb_pre_error_flush) begin
-        switch_buff_valid <= 1'b0;
-    end
-    else if (inst_data_ok && inst_buff_enable) begin
-        sw_inst_rd_buff     <= inst_rdata;
-        sw_pc_rd_buff       <= fs_pc;
-        sw_btb_ret_pc_buff  <= btb_ret_pc;
-        sw_btb_index_buff   <= btb_index;
-        sw_btb_taken_buff   <= btb_taken;
-        sw_btb_en_buff      <= btb_en;
-        sw_icache_miss_buff <= icache_miss;
-        sw_excp_buff        <= excp;
-        sw_excp_num_buff    <= excp_num;
-
-        switch_buff_valid <= 1'b1;
-    end
-end
-
-always @(posedge clk) begin
-    if (reset || flush_sign || btb_pre_error_flush || (fs_ready_go && ds_allowin)) begin
-        switch_ptr_his <= 1'b0;
-    end
-    else if (!inst_buff_enable && switch_buff_valid) begin
-        switch_ptr_his <= 1'b1;
-    end
-end
-
-assign switch_ptr = !inst_buff_enable && switch_buff_valid || switch_ptr_his;
 
 //exception
 assign pfs_excp_adef = (real_nextpc[0] || real_nextpc[1]); //user can only access low half address space, trigger only in tlb trans
@@ -376,7 +296,7 @@ always @(posedge clk) begin
     if (reset || flush_inst_delay /*|| btb_pre_error_flush*/) begin
         fs_valid <= 1'b0;
     end
-    else if (to_fs_valid) begin
+    else if (fs_allowin) begin
         fs_valid <= to_fs_valid;
     end
     else if (btb_pre_error_flush) begin
@@ -388,7 +308,7 @@ always @(posedge clk) begin
         fs_excp      <= 1'b0;
         fs_excp_num  <= 4'b0;
     end
-    else if (to_fs_valid && (!fetch_stop || flush_inst_go_dirt || btb_pre_error_flush && inst_addr_ok)) begin
+    else if (to_fs_valid && (fs_allowin || flush_inst_go_dirt || btb_pre_error_flush && inst_addr_ok)) begin
         fs_pc        <= real_nextpc;
         fs_excp      <= pfs_excp;
         fs_excp_num  <= pfs_excp_num;

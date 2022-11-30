@@ -151,6 +151,9 @@ wire        preld_inst       ;
 wire        es_br_pre_error  ;
 wire        es_br_pre        ;
 
+reg btb_pre_error_flush_reg;
+reg [31:0]btb_pre_error_flush_target_reg;
+
 assign {
         es_csr_rstat_en  ,  //349:349  for difftest
         es_inst_st_en    ,  //348:341  for difftest
@@ -279,7 +282,7 @@ always @(posedge clk) begin
         es_valid <= 1'b0;
     end
     else if (es_allowin) begin 
-        es_valid <= ds_to_es_valid;
+        es_valid <= ds_to_es_valid && !(btb_pre_error_flush_reg || btb_pre_error_flush);
     end
 
     if (reset || es_flush_sign) begin     
@@ -402,8 +405,21 @@ assign btb_operate_index = es_btb_index;
 wire btb_pre_error_flush = (btb_add_entry || btb_delete_entry || btb_pre_error || btb_target_error) && es_valid && es_ready_go && !es_excp && es_first_touch;
 wire [31:0]btb_pre_error_flush_target = br_taken ? br_target : es_pc + 32'h4;
 
-assign br_bus       = {btb_pre_error_flush,           //32:32
-                       btb_pre_error_flush_target     //31:0
+always @(posedge clk) begin   //bug1 no reset; branch no delay slot
+    if (reset || es_flush_sign) begin
+        btb_pre_error_flush_reg <= 1'b0;
+    end
+    else if (btb_pre_error_flush) begin 
+        btb_pre_error_flush_reg <= 1'b1;
+        btb_pre_error_flush_target_reg <= btb_pre_error_flush_target;
+    end
+    else begin
+        btb_pre_error_flush_reg <= 1'b0;
+    end
+end
+
+assign br_bus       = {btb_pre_error_flush_reg,           //32:32
+                       btb_pre_error_flush_target_reg     //31:0
                       };
 
 //forward path
